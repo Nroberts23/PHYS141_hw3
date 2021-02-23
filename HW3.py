@@ -78,6 +78,20 @@ def plot_3d_dist(star_x):
 
 	plt.savefig('plummer_pt1.png')
 
+def sphere_density_plot(rs, R):
+	#given the radii of all of our stars, plot the density of our model
+	fig = plt.figure(figsize=(6,4))
+	ax = fig.add_subplot(111)
+	ax.hist(rs, bins=200)
+	ax.set_xlabel('Radius (pc)')
+	ax.set_ylabel('Mass (2x10^7 M_solar)')
+	ax.set_xlim(0, max(rs))
+	ax.vlines(R, ymin=0, ymax=200)
+	ax.set_ylim(0,170)
+	ax.set_title('Mass Distribution of Generated Sphere')
+	plt.show()
+
+
 def main(print_imgs=False):
 	#initial conditions
 
@@ -106,138 +120,12 @@ def main(print_imgs=False):
 	ax = fig.add_subplot(111)
 	ax.plot(X,theor_dens_func(X))
 	ax.vlines(R, ymin=0, ymax=18)
-	ax.set_xlim(0,R * 1.5)
+	ax.set_xlim(0,max(star_rs))
+	ax.set_ylim(0,18)
 	ax.set_xlabel('Radius (pc)')
 	ax.set_ylabel('Density (Msolar / pc^3)')
-	ax.set_title('Plummer Sphere Density')
+	ax.set_title('Theoretical Plummer Sphere Density')
 	plt.show()
-"""
-	#integration perameters
-	tnow=0
-	max_step = 20
-	nout = 10
-	dt = 10
 
-	#looping to perform integration
-	for i in range(max_step):
-		if (i % nout == 0): #if enough steps have passed, print the state
-			if(print_imgs):
-				printstate(x, x_history, n, tnow)
-			x_history = np.append([[i] for i in star_x], x_history, axis=1)
-			v_history = np.append([[i] for i in star_v], v_history, axis=1)
-			t_history.append(tnow)
+	sphere_density_plot(star_rs, R)
 
-
-		star_x, star_v = leapstep(star_x, star_v, n_stars, dt, m) #take an integration step
-	
-		tnow += dt
-
-	if (max_step % nout == 0): #if the last step would have printed
-		if(print_imgs):
-			printstate(x, x_history, n, tnow) #then print
-		x_history = np.append([[i] for i in star_x], x_history, axis=1)
-		v_history = np.append([[i] for i in star_v], v_history, axis=1)
-		t_history.append(tnow)
-
-
-	plot_3d_dist(star_x)
-
-	return x_history, v_history, t_history
-"""
-
-def leapstep(star_x, star_v, n_stars, dt, m):
-	a = acc(star_x, n_stars, m) #call the acceleration code
-
-	for i in range(n_stars):
-		star_v[i] = star_v[i] + 0.5 * dt * a[i] #loop over all points and increase the velocities by a half setp
-
-	for i in range(n_stars): #loop again an increase the positions by a full step
-		star_x[i] = star_x[i] + dt * star_v[i]
-
-	a = acc(star_x, n_stars, m) #call the acceleration code again
-	
-	for i in range(n_stars):
-		star_v[i] = star_v[i] + 0.5 * dt * a[i] #another loop through velocity half-stepping
-
-	return star_x, star_v
-
-def acc(star_x, n_stars, m):
-
-	a = []
-	for p in range(n_stars):
-		pos = star_x[p]
-		others = [star_x[i] for i in range(n_stars) if not (i == p)]
-		
-		a_comps = []
-		for j in range(len(others)):
-			dist_inv = 1 / np.linalg.norm(pos-others[j])
-			k = m * dist_inv * dist_inv #Gm / r**2 with G=1
-
-			a_comps.append(k * (others[j] - pos))
-
-		a.append(sum(a_comps))
-
-	return a
-
-
-
-
-nonlin_pen = lambda x: [-np.sin(i) for i in x]
-
-def printstate(x, x_h, n, tnow):
-	#point_history.append(x[0])
-	fig = plt.figure(figsize=(8, 8))
-	ax = fig.add_subplot(111, projection='3d')
-	ax.set_xlim(-1.2,1.2)
-	ax.set_ylim(-1.2,1.2)
-
-	ax.set_title ("Ring Orbits: Unstable")
-	for i in range(n):
-		ax.plot([x[i][0]], [x[i][1]], [x[i][2]], 'ob')
-
-	plt.savefig('animate/unstable_ring_' + str(tnow) + '.png')
-"""
-	fig = plt.figure(figsize=(8,8))
-	ax = fig.add_subplot(111, projection='3d')
-	ax.set_xlim(-1.2,1.2)
-	ax.set_ylim(-1.2,1.2)
-	ax.plot([0],[0],[0], 'oy')
-
-	for planet in x_history:
-		xs = [i[0] for i in planet]
-		ys = [i[1] for i in planet]
-		zs = [i[2] for i in planet]
-		
-		ax.plot(xs=xs, ys=ys, zs=zs)
-		#ax.plot(xs=x_history[i][-1], ys=v_history[i][-1], zs=t_history[-1])
-
-	ax.set_title('Orbits of the Planets around the Sun (Origin)')"""
-		
-
-def plot_2d(x_history):
-	fig = plt.figure()
-	plt.plot(0,0, 'oy')
-
-	for planet in x_history:
-		xs = [i[0] for i in planet]
-		ys = [i[1] for i in planet]
-		plt.plot(xs, ys)
-
-	plt.title('Orbits of the Planets Around the Sun')
-
-def plot_3d(x_history, v_history, t_history):
-	fig = plt.figure(figsize=(8,8))
-	ax = fig.add_subplot(111, projection='3d')
-	ax.set_xlim(-1.5,1.5)
-	ax.set_ylim(-1.5, 1.5)
-	ax.plot([0],[0],[0], 'oy')
-
-	for planet in x_history:
-		xs = [i[0] for i in planet]
-		ys = [i[1] for i in planet]
-		zs = [i[2] for i in planet]
-		
-		ax.plot(xs=xs, ys=ys, zs=zs)
-		#ax.plot(xs=x_history[i][-1], ys=v_history[i][-1], zs=t_history[-1])
-
-	ax.set_title('Orbits of the Planets around the Sun (Origin)')
